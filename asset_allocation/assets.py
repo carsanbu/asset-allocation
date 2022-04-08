@@ -2,6 +2,7 @@
 # For more information in https://www.morningstar.com
 from sklearn.preprocessing import normalize
 from pandas_datareader import data as wb
+import yfinance as yf
 import pandas as pd
 import numpy as np
 
@@ -62,35 +63,37 @@ class AssetUniverse:
     def history(self):
         assets = self.stocks.copy()
         assets.remove('Leftover')
-        data = []        
+        data = []
+        yf.pdr_override()
+
         for asset in assets:
-            df = pd.DataFrame(wb.DataReader(asset, data_source='yahoo', start=self.start)['Adj Close'])
+            df = pd.DataFrame(wb.get_data_yahoo(asset, data_source='yahoo', start=self.start)['Adj Close'])
             # Limpia outliers
             z=np.abs(stats.zscore(df))
             df[(z > 5)] = np.nan
             df = df.fillna(method='ffill')
             df.name = asset
             data.append(df)
-                
+
         max_index = AssetUniverse.search_max_index(data)
         normalized_index_data = []
         for d in data:
             subset = d[max_index:]
             subset.name = d.name
             normalized_index_data.append(subset)
-            
+
         max_len = AssetUniverse.search_max_len(normalized_index_data)
-                
+
         reindexed = normalized_index_data[max_len[1]].copy()        
         reindexed = reindexed.rename(columns={'Adj Close': data[max_len[1]].name})
-        
+
         for i in range(len(normalized_index_data)):
             if i != max_len[1]:
                 h = normalized_index_data[i]
                 reindexed[h.name] = h.reindex(normalized_index_data[max_len[1]].index, method='ffill')
-        
+
         return reindexed
-        
+
     def crosscorrelation(self, step):
         h = self.history()
         n = len(h)
@@ -98,7 +101,7 @@ class AssetUniverse:
         for i in range(0, n, step):
             corr.append(h[i:i+step].corr())
         return corr
-    
+
     def volatility(self):
         return volatilities(self.history())    
     def performance(self):
