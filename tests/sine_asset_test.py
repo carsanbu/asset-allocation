@@ -7,8 +7,8 @@ class SineAssetTest(unittest.TestCase):
     def test(self):
         sine = SineAsset(0, 100, 50, 3.14)
         print(sine.history())
-        plt.plot(sine.history())
-        plt.show()
+        #plt.plot(sine.history())
+        #plt.show()
         self.assertTrue(max(sine.history()) < 1)
         self.assertTrue(max(sine.history()) > -1)
 if __name__ == '__main__':
