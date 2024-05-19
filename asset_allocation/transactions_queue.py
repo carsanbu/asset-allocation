@@ -1,9 +1,9 @@
-from asset_allocation.transaction import Transaction
+from asset_allocation.transaction import Price
 from typing import NamedTuple
 
 class TransactionPacket(NamedTuple):
     number: int
-    transaction: Transaction
+    transaction: Price
     total: float
     def __repr__(self):
         return f'{self.number} {self.transaction}'
@@ -12,7 +12,8 @@ class TransactionPacket(NamedTuple):
         return self.total / self.number
 
 class TransactionsQueue():
-    def __init__(self):
+    def __init__(self, isin):
+        self.isin = isin
         self.transaction_list = []
     def __repr__(self):
         return str(self.transaction_list)

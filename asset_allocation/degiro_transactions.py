@@ -1,4 +1,17 @@
 import pandas as pd
+from asset_allocation.transaction import Price
+from asset_allocation.transactions_queue import TransactionsQueue, TransactionPacket
+
+class TransactionsQueueSet:
+    def __init__(self):
+        self.queue_set = set()
+    def add(self, item: TransactionsQueue):
+        self.queue_set.add(item)
+    def get(self, isin: str):
+        for item in self.queue_set:
+            if item.isin == isin:
+                return item
+        return None
 
 class DegiroESTransactions:
     def __init__(self, transactions):
@@ -29,5 +42,15 @@ class DegiroESTransactions:
             'ID Orden': 'id'
         })
         return transactions
+    def queue(self):
+        df = self.value()
+        queue_set = TransactionsQueueSet()
+
+        for index, row in df.iloc[::-1].iterrows():
+            queue_set.add(TransactionsQueue(row.ISIN))
+            transactions_queue = queue_set.get(row.ISIN)
+            transactions_queue.put(TransactionPacket(row.number,
+                Price(row.value, row.currency), row.total))
+        return transactions_queue
 
 
