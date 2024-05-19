@@ -1,15 +1,4 @@
-from asset_allocation.transaction import Price
-from typing import NamedTuple
-
-class TransactionPacket(NamedTuple):
-    number: int
-    transaction: Price
-    total: float
-    def __repr__(self):
-        return f'{self.number} {self.transaction}'
-    def value_per_transaction(self):
-        """This value is counting commissions on the purchase and sales."""
-        return self.total / self.number
+from asset_allocation.transaction import Price, Transaction
 
 class TransactionsQueue():
     def __init__(self, isin):
@@ -18,24 +7,24 @@ class TransactionsQueue():
     def __repr__(self):
         return str(self.transaction_list)
 
-    def put(self, transaction_packet: TransactionPacket) -> None:
-        self.transaction_list.append(transaction_packet)
+    def put(self, transaction: Transaction) -> None:
+        self.transaction_list.append(transaction)
 
-    def get(self, number: int) -> list[TransactionPacket]:
+    def get(self, number: int) -> list[Transaction]:
         packet_list = []
         first_item = self.transaction_list[0]
         remaining_transactions = number
         while remaining_transactions > 0:
             if first_item.number > remaining_transactions:
                 packet_list.append(
-                    TransactionPacket(
+                    Transaction(
                         remaining_transactions,
-                        first_item.transaction,
+                        first_item.price,
                         remaining_transactions*first_item.value_per_transaction()))
                 new_number = first_item.number - remaining_transactions
-                self.transaction_list[0] = TransactionPacket(
+                self.transaction_list[0] = Transaction(
                         new_number,
-                        first_item.transaction,
+                        first_item.price,
                         new_number*first_item.value_per_transaction())
                 remaining_transactions = 0
             else:

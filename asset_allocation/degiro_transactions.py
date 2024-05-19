@@ -1,6 +1,6 @@
 import pandas as pd
-from asset_allocation.transaction import Price
-from asset_allocation.transactions_queue import TransactionsQueue, TransactionPacket
+from asset_allocation.transaction import Price, Transaction
+from asset_allocation.transactions_queue import TransactionsQueue
 
 class TransactionsQueueSet:
     def __init__(self):
@@ -49,7 +49,7 @@ class DegiroESTransactions:
         for index, row in df.iloc[::-1].iterrows():
             queue_set.add(TransactionsQueue(row.ISIN))
             transactions_queue = queue_set.get(row.ISIN)
-            transactions_queue.put(TransactionPacket(row.number,
+            transactions_queue.put(Transaction(row.number,
                 Price(row.value, row.currency), row.total))
         return transactions_queue
 
