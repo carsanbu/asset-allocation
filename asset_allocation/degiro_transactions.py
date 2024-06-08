@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from asset_allocation.transaction import Price, Transaction
 from asset_allocation.transactions_queue import TransactionsQueue
 
@@ -19,10 +20,9 @@ class DegiroESTransactions:
     def value(self):
         datetime = self.transactions['Hora'] + ' ' + self.transactions['Fecha']
         transactions = self.transactions.copy()
-        transactions.insert(0, 'date', pd.to_datetime(datetime, format='%H:%M %d-%m-%Y'))
+        transactions.insert(0, 'datetime', pd.to_datetime(datetime, format='%H:%M %d-%m-%Y', errors='raise'))
         transactions = transactions.drop('Fecha', axis=1)
         transactions = transactions.drop('Hora', axis=1)
-        transactions = transactions.set_index('date')
         transactions = transactions.rename(columns={
             'Producto': 'product',
             'Bolsa de': 'exchange',
@@ -39,18 +39,38 @@ class DegiroESTransactions:
             'Unnamed: 15': 'transaction_fees_currency',
             'Total': 'total',
             'Unnamed: 17': 'total_currency',
-            'ID Orden': 'id'
+            'ID Orden': 'order_id',
         })
         return transactions
     def queue(self):
         df = self.value()
+        cleaned_transactions = df.dropna(subset=['datetime'])
+        external_transactions = cleaned_transactions # df.dropna(subset=['execution_center'])
         queue_set = TransactionsQueueSet()
 
-        for index, row in df.iloc[::-1].iterrows():
-            queue_set.add(TransactionsQueue(row.ISIN))
+
+        for index, row in external_transactions.iloc[::-1].iterrows():
             transactions_queue = queue_set.get(row.ISIN)
-            transactions_queue.put(Transaction(row.number,
-                Price(row.value, row.currency), row.total))
-        return transactions_queue
+            if row['number'] > 0: # Purchase
+                if transactions_queue is None:
+                    queue_set.add(TransactionsQueue(row.ISIN))
+                    transactions_queue = queue_set.get(row.ISIN)
+                purchase = Transaction(row.number,
+                    Price(row.value, row.currency),
+                    row.total, row.datetime, row.order_id)
+                transactions_queue.put(purchase)
+                #print('Purchased:\t', row.ISIN, purchase)
+                #print('amount: ', transactions_queue.amount())
+            elif row['number'] < 0: # Sell
+                #print('Sell: ', row.ISIN, row.number)
+                if transactions_queue is None:
+                    raise RuntimeError('Cannot find the transaction queue')
+                sold_list = transactions_queue.get(-row.number)
+                for sold in sold_list:
+                    print(row.datetime, row.ISIN, row.total, sold)
+                    print('Benefit: ', row.total + sold.total)
+                #print('amount: ', transactions_queue.amount())
+            else:
+                print("Error: local value 0")
 
 

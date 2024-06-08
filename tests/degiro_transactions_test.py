@@ -11,7 +11,7 @@ class DegiroESTransactionsTest(unittest.TestCase):
         transactions_df = pd.read_csv(StringIO(self.transactions_csv))
         transactions = DegiroESTransactions(transactions_df)
         transactions_parsed = transactions.value()
-        print(transactions_parsed.head().T)
+        print(transactions_parsed.head())
         self.assertEqual(transactions_parsed.price[1], 283.5)
 
     def test_queue(self):

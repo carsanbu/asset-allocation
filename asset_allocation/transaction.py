@@ -14,8 +14,10 @@ class Transaction():
         self.number = number
         self.price = price
         self.total = total
+        self.date = date
+        self.order_id = order_id
     def __repr__(self):
-        return f'{self.number} {self.price}'
+        return f'{self.number}\t{self.price}\t{self.date}\t{self.order_id}'
     def value_per_transaction(self):
         """This value is counting commissions on the purchase and sales."""
         return self.total / self.number

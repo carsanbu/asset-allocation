@@ -55,5 +55,13 @@ class TransactionsQueueTest(unittest.TestCase):
         self.assertTrue(first_6_transactions[1].is_same_value(Transaction(1, price2, 400)))
 
         self.assertRaises(IndexError, transactions_queue.get, 10)
+
+    def test_5_put(self):
+        transactions_queue = TransactionsQueue('xxx')
+        price1 = Price(200, 'EUR')
+        transactions_queue.put(Transaction(5, price1, 1200))
+
+        first_5_transactions = transactions_queue.get(5)
+        self.assertTrue(first_5_transactions[0].is_same_value(Transaction(5, price1, 1200)))
 if __name__ == '__main__':
     unittest.main()
