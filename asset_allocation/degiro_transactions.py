@@ -26,7 +26,7 @@ class DegiroESTransactions:
         transactions = transactions.rename(columns={
             'Producto': 'product',
             'Bolsa de': 'exchange',
-            'Centro de ejecución': 'execution_center',
+            'Centro de': 'execution_center', # ejecución
             'Número': 'number',
             'Precio': 'price',
             'Unnamed: 8': 'price_currency',
@@ -62,13 +62,20 @@ class DegiroESTransactions:
                 #print('Purchased:\t', row.ISIN, purchase)
                 #print('amount: ', transactions_queue.amount())
             elif row['number'] < 0: # Sell
-                #print('Sell: ', row.ISIN, row.number)
                 if transactions_queue is None:
                     raise RuntimeError('Cannot find the transaction queue')
-                sold_list = transactions_queue.get(-row.number)
+                sold_number = -row.number
+                sold_list = transactions_queue.get(sold_number)
+                print(str(row.datetime) + " " + row.ISIN + ": " + row['product'])
+                print('Sell: ', sold_number,  row.total)
+                accum_benefit = 0
                 for sold in sold_list:
-                    print(row.datetime, row.ISIN, row.total, sold)
-                    print('Benefit: ', row.total + sold.total)
+                    print('\t', sold)
+                    benefit = (row.value/sold_number)*sold.number + sold.total
+                    accum_benefit = accum_benefit + benefit
+                    print(f'\tBenefit: {benefit} {(benefit/(-sold.total))*100:0.0f}%') # Because sold is negative
+                print("Total benefit:", accum_benefit)
+                print("--------------------------------------------")
                 #print('amount: ', transactions_queue.amount())
             else:
                 print("Error: local value 0")
